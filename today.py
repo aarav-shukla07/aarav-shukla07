@@ -111,7 +111,14 @@ def recursive_loc(owner, repo_name, data, cache_comment, addition_total=0, delet
         }
     }'''
     variables = {'repo_name': repo_name, 'owner': owner, 'cursor': cursor}
-    request = requests.post('https://api.github.com/graphql', json={'query': query, 'variables':variables}, headers=HEADERS)
+    
+    # Try the request up to 5 times if GitHub throws a 502 Bad Gateway error
+    for _ in range(5):
+        request = requests.post('https://api.github.com/graphql', json={'query': query, 'variables':variables}, headers=HEADERS)
+        if request.status_code != 502:
+            break
+        time.sleep(2) # Wait 2 seconds before retrying
+        
     if request.status_code == 200:
         if request.json()['data']['repository']['defaultBranchRef'] != None:
             return loc_counter_one_repo(owner, repo_name, data, cache_comment, request.json()['data']['repository']['defaultBranchRef']['target']['history'], addition_total, deletion_total, my_commits)
