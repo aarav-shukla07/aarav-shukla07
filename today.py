@@ -5,6 +5,9 @@ import os
 from lxml import etree
 import time
 import hashlib
+import sys
+
+sys.setrecursionlimit(10000)
 
 # Fine-grained personal access token with All Repositories access:
 HEADERS = {'authorization': 'token '+ os.environ['ACCESS_TOKEN']}
