@@ -5,6 +5,11 @@ on:
       - main
   schedule:
     - cron: "0 4 * * *"
+
+# THIS IS THE CRITICAL FIX FOR EXIT CODE 128
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,29 +18,33 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          
       - name: Get Python 3.8
         uses: actions/setup-python@v5
         with:
           python-version: '3.8'
-          cache: 'pip' # Modern way to cache pip dependencies
+          cache: 'pip'
+          
       - name: Configure pip cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/cache/requirements.txt') }}
           restore-keys: ${{ runner.os }}-pip-
+          
       - name: Install dependencies
         run: python -m pip install -r cache/requirements.txt
+        
       - name: Update README file
         env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           USER_NAME: ${{ secrets.USER_NAME }}
         run: python today.py
-      - name: Commit
+        
+      - name: Commit and Push
         run: |-
-          git add .
-          git diff
           git config --global user.email "github-actions-bot@aarav-shukla07.github.io"
           git config --global user.name "aarav-shukla07/GitHub-Actions-Bot"
-          git commit -m "Updated README stats" -a || echo "No changes to commit"
+          git add .
+          git commit -m "Updated README stats" || echo "No changes to commit"
           git push
